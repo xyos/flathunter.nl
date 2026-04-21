@@ -16,6 +16,8 @@ downloads/
 eggs/
 .eggs/
 lib/
+!frontend/src/lib/
+!frontend/src/lib/**
 lib64/
 parts/
 sdist/
@@ -113,3 +115,4 @@ requirements.txt
 
 # OS files
 .DS_Store
+.vercel
