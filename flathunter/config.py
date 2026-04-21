@@ -18,6 +18,9 @@ from flathunter.crawler.immowelt import Immowelt
 from flathunter.crawler.wggesucht import WgGesucht
 from flathunter.crawler.vrmimmo import VrmImmo
 from flathunter.crawler.subito import Subito
+from flathunter.crawler.funda import Funda
+from flathunter.crawler.pararius import Pararius
+from flathunter.crawler.huurwoningen import Huurwoningen
 from flathunter.filter import Filter
 from flathunter.logging import logger
 from flathunter.exceptions import ConfigException
@@ -43,6 +46,7 @@ class Env:
     # Generic Config
     FLATHUNTER_TARGET_URLS = _read_env("FLATHUNTER_TARGET_URLS")
     FLATHUNTER_DATABASE_LOCATION = _read_env("FLATHUNTER_DATABASE_LOCATION")
+    FLATHUNTER_DATABASE_URL = _read_env("FLATHUNTER_DATABASE_URL")
     FLATHUNTER_GOOGLE_CLOUD_PROJECT_ID = _read_env(
         "FLATHUNTER_GOOGLE_CLOUD_PROJECT_ID")
     FLATHUNTER_VERBOSE_LOG = _read_env("FLATHUNTER_VERBOSE_LOG")
@@ -129,6 +133,9 @@ Preis: {price}
             Kleinanzeigen(self),
             Immowelt(self),
             Subito(self),
+            Funda(self),
+            Pararius(self),
+            Huurwoningen(self),
             Immobiliare(self),
             Idealista(self),
             VrmImmo(self)
@@ -201,6 +208,18 @@ Preis: {price}
         if config_database_location is not None:
             return config_database_location
         return os.path.abspath(os.path.dirname(os.path.abspath(__file__)) + "/..")
+
+    def database_url(self):
+        """Return the Postgres connection string, if configured.
+
+        Env var FLATHUNTER_DATABASE_URL wins; otherwise falls back to the
+        `database_url` key in config.yaml. When unset the crawler uses local
+        SQLite via database_location().
+        """
+        env_value = Env.FLATHUNTER_DATABASE_URL()
+        if env_value:
+            return env_value
+        return self._read_yaml_path('database_url', None)
 
     def target_urls(self) -> List[str]:
         """List of target URLs for crawling"""
