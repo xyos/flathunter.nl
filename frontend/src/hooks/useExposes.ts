@@ -33,11 +33,11 @@ export function useExposes(filters: ExposeFilters = {}) {
 }
 
 export function useExpose(id: number, crawler: string) {
-  const { data, error, isLoading } = useSWR<ExposeWithFavorite>(
+  const { data, error, isLoading, mutate } = useSWR<ExposeWithFavorite>(
     `/api/exposes/${id}?crawler=${crawler}`,
     fetcher
   );
-  return { data, error, isLoading };
+  return { data, error, isLoading, mutate };
 }
 
 export function useStats(filters: ExposeFilters = {}) {

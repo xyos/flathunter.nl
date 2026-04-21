@@ -1,8 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { FavoriteButton } from "./FavoriteButton";
+import { buildExposeHrefFromExpose } from "@/lib/expose-links";
 import { formatPrice, formatPricePerSqm } from "@/lib/parse";
 import { MapPin, Maximize2, DoorOpen, Zap, ExternalLink } from "lucide-react";
 import type { ExposeWithFavorite } from "@/lib/types";
@@ -13,8 +15,22 @@ interface ExposeCardProps {
 }
 
 export function ExposeCard({ expose, onToggleFavorite }: ExposeCardProps) {
+  const router = useRouter();
+  const href = buildExposeHrefFromExpose(expose);
+
   return (
-    <Card className="overflow-hidden hover:shadow-lg transition-shadow group">
+    <Card
+      className="overflow-hidden hover:shadow-lg transition-shadow group cursor-pointer"
+      role="link"
+      tabIndex={0}
+      onClick={() => router.push(href)}
+      onKeyDown={(event) => {
+        if (event.key === "Enter" || event.key === " ") {
+          event.preventDefault();
+          router.push(href);
+        }
+      }}
+    >
       <div className="relative aspect-[16/10] bg-muted">
         {expose.image ? (
           // eslint-disable-next-line @next/next/no-img-element
@@ -50,7 +66,9 @@ export function ExposeCard({ expose, onToggleFavorite }: ExposeCardProps) {
       </div>
 
       <CardContent className="p-4 space-y-2">
-        <h3 className="font-semibold truncate">{expose.title}</h3>
+        <h3 className="font-semibold truncate group-hover:underline">
+          {expose.title}
+        </h3>
 
         <div className="flex items-center gap-1 text-sm text-muted-foreground">
           <MapPin className="h-3.5 w-3.5 shrink-0" />

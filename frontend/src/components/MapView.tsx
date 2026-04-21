@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useRef } from "react";
 import type { ExposeWithFavorite, GeoCache } from "@/lib/types";
+import { buildExposeHrefFromExpose } from "@/lib/expose-links";
 import { formatPrice, formatPricePerSqm } from "@/lib/parse";
 
 interface MapViewProps {
@@ -95,6 +96,7 @@ export function MapView({ exposes, avgPricePerSqm }: MapViewProps) {
             <span>${formatPrice(expose.price_numeric)}</span>
             ${expose.price_per_sqm ? ` &middot; ${formatPricePerSqm(expose.price_per_sqm)}` : ""}<br/>
             <span>${expose.size} &middot; ${expose.rooms} rooms</span><br/>
+            <a href="${buildExposeHrefFromExpose(expose)}" style="display:inline-block;margin-top:6px;margin-right:8px">Open details</a>
             <a href="${expose.url}" target="_blank" rel="noopener">View on ${expose.crawler}</a>
           </div>
         `);

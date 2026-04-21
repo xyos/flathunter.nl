@@ -16,7 +16,7 @@ export default function ListingsPage() {
     limit: 24,
   });
 
-  const { data, isLoading, mutate } = useExposes(filters);
+  const { data, isLoading } = useExposes(filters);
   const { data: stats } = useStats({ crawler: filters.crawler });
   const { addFavorite, removeFavorite, favorites } = useFavorites();
 
@@ -30,9 +30,8 @@ export default function ListingsPage() {
       } else {
         await addFavorite(exposeId, crawler);
       }
-      mutate();
     },
-    [favorites, addFavorite, removeFavorite, mutate]
+    [favorites, addFavorite, removeFavorite]
   );
 
   return (

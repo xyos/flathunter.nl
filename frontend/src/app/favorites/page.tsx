@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useCallback } from "react";
+import Link from "next/link";
 import { useExposes } from "@/hooks/useExposes";
 import { useFavorites } from "@/hooks/useFavorites";
 import { Card, CardContent } from "@/components/ui/card";
@@ -16,18 +17,10 @@ import {
 import { NotesEditor } from "@/components/NotesEditor";
 import { FavoriteButton } from "@/components/FavoriteButton";
 import { formatPrice, formatPricePerSqm } from "@/lib/parse";
-import { Download, Star, ExternalLink, MapPin } from "lucide-react";
+import { buildExposeHrefFromExpose } from "@/lib/expose-links";
+import { FAVORITE_STATUSES } from "@/lib/favorites";
+import { Download, Star, ExternalLink, MapPin, ArrowUpRight } from "lucide-react";
 import type { ExposeWithFavorite, FavoriteStatus } from "@/lib/types";
-
-const STATUSES: { value: FavoriteStatus; label: string }[] = [
-  { value: "new", label: "New" },
-  { value: "viewed", label: "Viewed" },
-  { value: "contacted", label: "Contacted" },
-  { value: "visited", label: "Visited" },
-  { value: "offer_made", label: "Offer Made" },
-  { value: "won", label: "Won" },
-  { value: "rejected", label: "Rejected" },
-];
 
 function StarRating({
   rating,
@@ -55,7 +48,7 @@ function StarRating({
 
 export default function FavoritesPage() {
   const { data } = useExposes({ limit: 100 });
-  const { favorites, updateFavorite, removeFavorite, mutate } = useFavorites();
+  const { updateFavorite, removeFavorite } = useFavorites();
   const [statusFilter, setStatusFilter] = useState<string>("all");
 
   const favoriteExposes: ExposeWithFavorite[] = (data?.exposes || []).filter(
@@ -107,9 +100,8 @@ export default function FavoritesPage() {
   const handleRemove = useCallback(
     async (exposeId: number, crawler: string) => {
       await removeFavorite(exposeId, crawler);
-      mutate();
     },
-    [removeFavorite, mutate]
+    [removeFavorite]
   );
 
   return (
@@ -123,7 +115,7 @@ export default function FavoritesPage() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Statuses</SelectItem>
-              {STATUSES.map((s) => (
+              {FAVORITE_STATUSES.map((s) => (
                 <SelectItem key={s.value} value={s.value}>
                   {s.label}
                 </SelectItem>
@@ -158,13 +150,24 @@ export default function FavoritesPage() {
                   <div className="flex-1 min-w-0 space-y-2">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <h3 className="font-semibold">{expose.title}</h3>
+                        <Link
+                          href={buildExposeHrefFromExpose(expose)}
+                          className="font-semibold hover:underline"
+                        >
+                          {expose.title}
+                        </Link>
                         <div className="flex items-center gap-1 text-sm text-muted-foreground">
                           <MapPin className="h-3.5 w-3.5" />
                           {expose.address}
                         </div>
                       </div>
                       <div className="flex items-center gap-2 shrink-0">
+                        <Link
+                          href={buildExposeHrefFromExpose(expose)}
+                          className="text-muted-foreground hover:text-foreground"
+                        >
+                          <ArrowUpRight className="h-4 w-4" />
+                        </Link>
                         <a
                           href={expose.url}
                           target="_blank"
@@ -221,7 +224,7 @@ export default function FavoritesPage() {
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          {STATUSES.map((s) => (
+                          {FAVORITE_STATUSES.map((s) => (
                             <SelectItem key={s.value} value={s.value}>
                               {s.label}
                             </SelectItem>

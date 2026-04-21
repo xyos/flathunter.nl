@@ -1,13 +1,23 @@
-import useSWR from "swr";
+import useSWR, { useSWRConfig } from "swr";
 import type { Favorite, FavoriteStatus } from "@/lib/types";
 
 const fetcher = (url: string) => fetch(url).then((r) => r.json());
 
 export function useFavorites() {
+  const { mutate: globalMutate } = useSWRConfig();
   const { data, error, isLoading, mutate } = useSWR<Favorite[]>(
     "/api/favorites",
     fetcher
   );
+
+  async function revalidateRelated() {
+    await Promise.all([
+      mutate(),
+      globalMutate(
+        (key) => typeof key === "string" && key.startsWith("/api/exposes")
+      ),
+    ]);
+  }
 
   async function addFavorite(exposeId: number, crawler: string) {
     await fetch("/api/favorites", {
@@ -15,7 +25,7 @@ export function useFavorites() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ expose_id: exposeId, crawler }),
     });
-    mutate();
+    await revalidateRelated();
   }
 
   async function updateFavorite(
@@ -28,14 +38,14 @@ export function useFavorites() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(updates),
     });
-    mutate();
+    await revalidateRelated();
   }
 
   async function removeFavorite(exposeId: number, crawler: string) {
     await fetch(`/api/favorites/${exposeId}?crawler=${crawler}`, {
       method: "DELETE",
     });
-    mutate();
+    await revalidateRelated();
   }
 
   return {
