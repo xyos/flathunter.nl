@@ -1,4 +1,5 @@
 """Functions and classes related to sending Telegram messages"""
+
 import json
 import time
 from typing import List, Dict, Optional
@@ -39,10 +40,9 @@ class SenderTelegram(Processor, Notifier):
         )
         return expose
 
-    def __broadcast(self,
-                    receivers: List[int],
-                    message: str,
-                    images: Optional[List[str]] = None) -> None:
+    def __broadcast(
+        self, receivers: List[int], message: str, images: Optional[List[str]] = None
+    ) -> None:
         """
         Broadcast given message to the given receiver ids
         :param receivers: list of user/group ids
@@ -76,23 +76,24 @@ class SenderTelegram(Processor, Notifier):
         """
 
         payload = {
-            'chat_id': str(chat_id),
-            'text': message,
+            "chat_id": str(chat_id),
+            "text": message,
         }
-        logger.debug(('token:', self.bot_token))
-        logger.debug(('chat_id:', chat_id))
-        logger.debug(('text:', message))
+        logger.debug(("token:", self.bot_token))
+        logger.debug(("chat_id:", chat_id))
+        logger.debug(("text:", message))
         logger.debug("Retrieving URL %s, payload %s", self.__text_message_url, payload)
         response = requests.request("POST", self.__text_message_url, data=payload, timeout=30)
         logger.debug("Got response (%i): %s", response.status_code, response.content)
 
         # handle error
         if response.status_code != 200:
-            self.__handle_error("When sending bot text message, we got an error.",
-                response, chat_id)
+            self.__handle_error(
+                "When sending bot text message, we got an error.", response, chat_id
+            )
             return {}
 
-        return response.json().get('result', {})
+        return response.json().get("result", {})
 
     def __send_images(self, chat_id: int, msg: Dict, images: List[str]):
         """
@@ -107,13 +108,13 @@ class SenderTelegram(Processor, Notifier):
         # if there are more than 10 images, we need to divide it into multiple messages.
         for chunk in chunk_list(images, 10):
             payload = {
-                'chat_id': str(chat_id),
+                "chat_id": str(chat_id),
                 # media expected to be an array of objects in string format
-                'media': json.dumps([{"type": "photo", "media": url} for url in chunk]),
-                'disable_notification': True,
+                "media": json.dumps([{"type": "photo", "media": url} for url in chunk]),
+                "disable_notification": True,
             }
-            if msg.get('message_id', None):
-                payload['reply_to_message_id'] = msg.get('message_id')
+            if msg.get("message_id", None):
+                payload["reply_to_message_id"] = msg.get("message_id")
 
             response = requests.request("POST", self.__media_group_url, data=payload, timeout=30)
 
@@ -122,7 +123,7 @@ class SenderTelegram(Processor, Notifier):
                 self.__handle_error(
                     "When sending media group, we got an error.",
                     response=response,
-                    chat_id=str(chat_id)
+                    chat_id=str(chat_id),
                 )
                 return
 
@@ -142,7 +143,7 @@ class SenderTelegram(Processor, Notifier):
         status_code = response.status_code
         data = response.json()
 
-        logger.error("%s, status code: %i, data: %s" , msg, status_code, data)
+        logger.error("%s, status code: %i, data: %s", msg, status_code, data)
 
         if response.status_code == 403:
             if "bot was blocked by the user" in data.get("description", ""):
@@ -166,13 +167,18 @@ class SenderTelegram(Processor, Notifier):
         :return: str
         """
 
-        return self.config.message_format().format(
-            crawler=expose.get('crawler', 'N/A'),
-            title=expose.get('title', 'N/A'),
-            rooms=expose.get('rooms', 'N/A'),
-            size=expose.get('size', 'N/A'),
-            price=expose.get('price', 'N/A'),
-            url=expose.get('url', 'N/A'),
-            address=expose.get('address', 'N/A'),
-            durations=expose.get('durations', 'N/A')
-        ).strip()
+        return (
+            self.config.message_format()
+            .format(
+                crawler=expose.get("crawler", "N/A"),
+                title=expose.get("title", "N/A"),
+                rooms=expose.get("rooms", "N/A"),
+                size=expose.get("size", "N/A"),
+                price=expose.get("price", "N/A"),
+                energy_rating=expose.get("energy_rating", "N/A"),
+                url=expose.get("url", "N/A"),
+                address=expose.get("address", "N/A"),
+                durations=expose.get("durations", "N/A"),
+            )
+            .strip()
+        )

@@ -19,8 +19,13 @@ else:
     config = Config()
 
 if __name__ == '__main__':
-    # Use the SQLite DB file if we are running locally
-    id_watch = IdMaintainer(f'{config.database_location()}/processed_ids.db')
+    # Prefer the shared Postgres DB when configured, otherwise fall back to local SQLite.
+    database_url = config.database_url()
+    if database_url:
+        from flathunter.postgres_idmaintainer import PostgresIdMaintainer
+        id_watch = PostgresIdMaintainer(database_url)
+    else:
+        id_watch = IdMaintainer(f'{config.database_location()}/processed_ids.db')
 else:
     # Load the driver manager from local cache (if chrome_driver_install.py has been run
     os.environ['WDM_LOCAL'] = '1'

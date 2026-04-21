@@ -15,6 +15,15 @@ from flathunter.config import Config
 from flathunter.heartbeat import Heartbeat
 from flathunter.time_utils import wait_during_period
 
+
+def _build_id_watch(config):
+    """Pick Postgres when FLATHUNTER_DATABASE_URL is set, else local SQLite."""
+    database_url = config.database_url()
+    if database_url:
+        from flathunter.postgres_idmaintainer import PostgresIdMaintainer
+        return PostgresIdMaintainer(database_url)
+    return IdMaintainer(f'{config.database_location()}/processed_ids.db')
+
 __author__ = "Jan Harrie"
 __version__ = "1.0"
 __maintainer__ = "Nody"
@@ -24,7 +33,7 @@ __status__ = "Production"
 
 def launch_flat_hunt(config, heartbeat: Heartbeat):
     """Starts the crawler / notification loop"""
-    id_watch = IdMaintainer(f'{config.database_location()}/processed_ids.db')
+    id_watch = _build_id_watch(config)
 
     time_from = dtime.fromisoformat(config.loop_pause_from())
     time_till = dtime.fromisoformat(config.loop_pause_till())
