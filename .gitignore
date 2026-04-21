@@ -91,9 +91,13 @@ ENV/
 
 .webkit_cache/
 processed_ids.db
+processed_ids.db-shm
+processed_ids.db-wal
+processed_ids.db.bak
 
 .idea/
 config.yaml
+.neoconf.json
 
 # Vim
 .*.swp

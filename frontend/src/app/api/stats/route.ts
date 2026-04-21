@@ -13,10 +13,17 @@ export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
   const crawler = params.get("crawler") || undefined;
 
-  const raw = getAllExposes();
+  const raw = await getAllExposes();
+
+  type RawDetails = {
+    price?: string;
+    size?: string;
+    energy_rating?: string;
+    address?: string;
+  };
 
   const enriched = raw.map((row) => {
-    const details = JSON.parse(row.details);
+    const details = row.details as RawDetails;
     const price_numeric = parsePrice(details.price || "");
     const size_numeric = parseSize(details.size || "");
     return {

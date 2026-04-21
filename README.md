@@ -297,6 +297,24 @@ To make deployment with docker easier, most of the important configuration optio
  - FLATHUNTER_FILTER_MAX_ROOMS - the maximum number of rooms (integer)
  - FLATHUNTER_FILTER_MAX_PRICE_PER_SQUARE - the maximum price per square meter (integer euros)
 
+### Cloud hosting: Vercel frontend + Neon Postgres + local crawler
+
+The `frontend/` Next.js dashboard can be deployed to Vercel while the Python crawler keeps running on your laptop. Both talk to a shared Neon Postgres database.
+
+**One-time setup:**
+
+1. Create a Neon project (https://neon.tech) and grab its connection strings.
+2. Apply the schema once: `psql "$DATABASE_URL" -f frontend/src/db/schema.sql`.
+3. Migrate the existing SQLite data: `pipenv run python -m flathunter.migrate_sqlite_to_postgres --sqlite ./processed_ids.db --pg "$FLATHUNTER_DATABASE_URL"`.
+4. Import the repo into Vercel with `Root Directory = frontend`. Set the `DATABASE_URL` environment variable in the Vercel dashboard for both Production and Preview environments.
+
+**Local development:**
+
+- Crawler: put `FLATHUNTER_DATABASE_URL=postgres://...` in `.env` at the repo root (see `.env.example`). `flathunt.py` will prefer the Postgres maintainer when this is set and fall back to local SQLite when it's unset.
+- Frontend: put `DATABASE_URL=postgres://...` in `frontend/.env.local` (see `frontend/.env.example`), then `cd frontend && npm run dev`.
+
+**Deploy on push:** Vercel auto-deploys `main` → production and every PR → a preview URL. The `.github/workflows/frontend.yml` workflow additionally runs `lint`, `tsc --noEmit` and `next build` for every frontend-touching PR.
+
 ### Google Cloud Deployment
 
 You can run `Flathunter` on Google's App Engine, in the free tier, at no cost if you don't need captcha solving. If you need to solve captchas, you can use Google Cloud Run as described later. To get started, first install the [Google Cloud SDK](https://cloud.google.com/sdk/docs) on your machine, and run:

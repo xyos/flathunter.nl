@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getAllExposes, getDb } from "@/lib/db";
+import { getAllExposes, getAllFavorites } from "@/lib/db";
 import { parsePrice, parseSize, computePricePerSqm } from "@/lib/parse";
-import type { ExposeWithFavorite, Favorite } from "@/lib/types";
+import type { ExposeWithFavorite } from "@/lib/types";
 
 export async function GET(request: NextRequest) {
   const params = request.nextUrl.searchParams;
@@ -18,17 +18,11 @@ export async function GET(request: NextRequest) {
   const page = Math.max(1, Number(params.get("page") || "1"));
   const limit = Math.min(100, Math.max(1, Number(params.get("limit") || "24")));
 
-  const raw = getAllExposes();
-
-  // Get all favorites for joining
-  const favRows = getDb()
-    .prepare("SELECT * FROM favorites")
-    .all() as Favorite[];
+  const [raw, favRows] = await Promise.all([getAllExposes(), getAllFavorites()]);
   const favMap = new Map(favRows.map((f) => [`${f.expose_id}-${f.crawler}`, f]));
 
-  // Parse and enrich
   let exposes: ExposeWithFavorite[] = raw.map((row) => {
-    const details = JSON.parse(row.details);
+    const details = row.details as Record<string, string | undefined>;
     const price_numeric = parsePrice(details.price || "");
     const size_numeric = parseSize(details.size || "");
     const price_per_sqm = computePricePerSqm(price_numeric, size_numeric);
@@ -53,7 +47,6 @@ export async function GET(request: NextRequest) {
     };
   });
 
-  // Filter
   if (minPrice) exposes = exposes.filter((e) => e.price_numeric !== null && e.price_numeric >= minPrice);
   if (maxPrice) exposes = exposes.filter((e) => e.price_numeric !== null && e.price_numeric <= maxPrice);
   if (minSize) exposes = exposes.filter((e) => e.size_numeric !== null && e.size_numeric >= minSize);
@@ -73,7 +66,6 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Sort
   const dir = order === "desc" ? -1 : 1;
   exposes.sort((a, b) => {
     switch (sort) {

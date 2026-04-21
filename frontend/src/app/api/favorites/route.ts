@@ -1,11 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { getDb } from "@/lib/db";
-import type { Favorite } from "@/lib/types";
+import { getAllFavorites, insertFavorite } from "@/lib/db";
 
 export async function GET() {
-  const favorites = getDb()
-    .prepare("SELECT * FROM favorites ORDER BY updated_at DESC")
-    .all() as Favorite[];
+  const favorites = await getAllFavorites();
   return NextResponse.json(favorites);
 }
 
@@ -14,12 +11,6 @@ export async function POST(request: NextRequest) {
   if (!expose_id || !crawler) {
     return NextResponse.json({ error: "expose_id and crawler required" }, { status: 400 });
   }
-
-  getDb()
-    .prepare(
-      `INSERT OR IGNORE INTO favorites (expose_id, crawler, status) VALUES (?, ?, 'new')`
-    )
-    .run(expose_id, crawler);
-
+  await insertFavorite(Number(expose_id), crawler);
   return NextResponse.json({ success: true });
 }
